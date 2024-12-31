@@ -1,8 +1,15 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import func  # Import func for SQL functions
-from models import Invoice  # Import your Invoice model here
-from num2words import num2words  # Library for converting numbers to words
+from sqlalchemy.sql import func
+from models import Invoice
+from dotenv import load_dotenv
+from openai import OpenAI
+import os
+
+load_dotenv()
+from openai import OpenAI
+client = OpenAI()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 def generate_invoice_number(invoice_date: str, db: Session) -> str:
     # Convert the provided invoice_date to datetime.date
@@ -35,8 +42,28 @@ def generate_invoice_number(invoice_date: str, db: Session) -> str:
     return f"{month_year}_{str(new_number).zfill(3)}"
 
 def number_to_words(number: float) -> str:
-    """
-    Convert a number to its French word representation, appending "Dinars."
-    """
-    words = num2words(number, lang="fr")  # Convert the number to French words
-    return f"{words.capitalize()} dinars"
+    number_formatted = "{:.3f}".format(number)
+    
+    try:
+        # Create the chat completion
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"je vais te donner un montant en dinars en chiffre et tu dois me répondre juste avec le montant en lettres et donner moi aussi les millimes pas les centimes, le montant est {number_formatted}"
+                }
+            ],
+            temperature=1,
+            max_tokens=100,  # Use a reasonable max_tokens limit
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
+        )
+        
+        # Access the content of the first choice
+        words = response.choices[0].message.content
+        return words
+    
+    except Exception as e:
+        return f"Error: Unable to convert number to words. {str(e)}"
