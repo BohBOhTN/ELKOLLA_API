@@ -51,7 +51,7 @@ def number_to_words(number: float) -> str:
             messages=[
                 {
                     "role": "user",
-                    "content": f"je vais te donner un montant en dinars en chiffre et tu dois me répondre juste avec le montant en lettres et donner moi aussi les millimes pas les centimes, le montant est {number_formatted}"
+                    "content": f"je vais te donner un montant en dinars en chiffre et tu dois me répondre juste avec le montant en lettres et donner moi aussi les millimes pas les centimes, si y 'a pas des millimes càd ,000 ce n'est pas la pene d'ecrire avec aucun millime le montant est {number_formatted}"
                 }
             ],
             temperature=1,

@@ -8,6 +8,7 @@ from utils import number_to_words, generate_invoice_number  # Import the helper 
 from datetime import datetime
 from typing import List, Optional
 from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.sql import func  # Import func for SQL functions
 
 
@@ -183,6 +184,6 @@ def delete_invoice(
     db.delete(invoice)
     db.commit()
     
-    return {"message": f"Invoice with ID {invoice_id} or number {invoice_number} has been deleted successfully."}
+    return {"message": f"Invoice has been deleted successfully."}
 
 
