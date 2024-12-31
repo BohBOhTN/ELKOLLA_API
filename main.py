@@ -1,9 +1,16 @@
 from fastapi import FastAPI, Depends
+from fastapi.encoders import jsonable_encoder  # Fix: Add this line
 from sqlalchemy.orm import Session
 from models import Invoice, Item
 from database import SessionLocal, init_db
 from pydantic import BaseModel
 from utils import number_to_words, generate_invoice_number  # Import the helper function
+from datetime import datetime
+from typing import List, Optional
+from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Depends, HTTPException
+from sqlalchemy.sql import func  # Import func for SQL functions
+
 
 app = FastAPI()
 
@@ -41,6 +48,9 @@ def get_db():
 
 @app.post("/create_invoice", response_model=InvoiceResponse)
 def create_invoice(invoice_request: InvoiceRequest, db: Session = Depends(get_db)):
+    # Convert invoice_date from string to datetime.date
+    invoice_date_obj = datetime.strptime(invoice_request.invoice_date, "%d/%m/%Y").date()
+
     # 1. Calculate Subtotal HT
     subtotal_ht = sum(item.unit_price * item.quantity for item in invoice_request.items)
 
@@ -64,7 +74,7 @@ def create_invoice(invoice_request: InvoiceRequest, db: Session = Depends(get_db
         client_name=invoice_request.client_name,
         vat_number=invoice_request.vat_number,
         address=invoice_request.address,
-        invoice_date=invoice_request.invoice_date,
+        invoice_date=invoice_date_obj,  # Use the converted date object here
         invoice_number=invoice_number,
         subtotal_ht=subtotal_ht,
         montant_tva=montant_tva,
@@ -99,3 +109,81 @@ def create_invoice(invoice_request: InvoiceRequest, db: Session = Depends(get_db
         final_price=final_price,
         final_price_in_words=final_price_in_words
     )
+
+@app.get("/invoices", response_model=List[InvoiceResponse])
+def get_invoices(
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    day: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieve invoices filtered by year, month, or day.
+    - year: Optional[int] -> Filter by year
+    - month: Optional[int] -> Filter by month
+    - day: Optional[int] -> Filter by day
+    """
+    query = db.query(Invoice)
+
+    if year:
+        query = query.filter(func.extract('year', Invoice.invoice_date) == year)
+    if month:
+        query = query.filter(func.extract('month', Invoice.invoice_date) == month)
+    if day:
+        query = query.filter(func.extract('day', Invoice.invoice_date) == day)
+
+    invoices = query.all()
+
+    # Convert to response model
+    invoice_responses = [
+        InvoiceResponse(
+            invoice_number=invoice.invoice_number,
+            subtotal_ht=invoice.subtotal_ht,
+            montant_tva=invoice.montant_tva,
+            timbre_price=invoice.timbre_price,
+            final_price=invoice.final_price,
+            final_price_in_words=invoice.final_price_in_words,
+        )
+        for invoice in invoices
+    ]
+
+    # Use jsonable_encoder to serialize Pydantic models
+    return JSONResponse(content=jsonable_encoder(invoice_responses))
+
+@app.delete("/delete_invoice")
+def delete_invoice(
+    invoice_id: Optional[int] = None, 
+    invoice_number: Optional[str] = None, 
+    db: Session = Depends(get_db)
+):
+    """
+    Delete an invoice by ID or invoice number.
+    - invoice_id: int -> Delete based on invoice ID.
+    - invoice_number: str -> Delete based on invoice number.
+    """
+    if not invoice_id and not invoice_number:
+        raise HTTPException(status_code=400, detail="You must provide either invoice_id or invoice_number.")
+    
+    # Find the invoice
+    invoice_query = db.query(Invoice)
+    
+    if invoice_id:
+        invoice_query = invoice_query.filter(Invoice.invoice_id == invoice_id)
+    elif invoice_number:
+        invoice_query = invoice_query.filter(Invoice.invoice_number == invoice_number)
+    
+    invoice = invoice_query.first()
+    
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found.")
+    
+    # Delete associated items first
+    db.query(Item).filter(Item.invoice_id == invoice.invoice_id).delete()
+
+    # Delete the invoice
+    db.delete(invoice)
+    db.commit()
+    
+    return {"message": f"Invoice has been deleted successfully."}
+
+
