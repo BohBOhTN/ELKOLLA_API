@@ -5,6 +5,9 @@ from database import SessionLocal, init_db
 from pydantic import BaseModel
 from utils import number_to_words, generate_invoice_number  # Import the helper function
 from datetime import datetime
+from typing import List, Optional
+from fastapi.responses import JSONResponse
+from sqlalchemy.sql import func  # Import func for SQL functions
 
 app = FastAPI()
 
@@ -103,3 +106,44 @@ def create_invoice(invoice_request: InvoiceRequest, db: Session = Depends(get_db
         final_price=final_price,
         final_price_in_words=final_price_in_words
     )
+from fastapi.encoders import jsonable_encoder
+
+@app.get("/invoices", response_model=List[InvoiceResponse])
+def get_invoices(
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    day: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieve invoices filtered by year, month, or day.
+    - year: Optional[int] -> Filter by year
+    - month: Optional[int] -> Filter by month
+    - day: Optional[int] -> Filter by day
+    """
+    query = db.query(Invoice)
+
+    if year:
+        query = query.filter(func.extract('year', Invoice.invoice_date) == year)
+    if month:
+        query = query.filter(func.extract('month', Invoice.invoice_date) == month)
+    if day:
+        query = query.filter(func.extract('day', Invoice.invoice_date) == day)
+
+    invoices = query.all()
+
+    # Convert to response model
+    invoice_responses = [
+        InvoiceResponse(
+            invoice_number=invoice.invoice_number,
+            subtotal_ht=invoice.subtotal_ht,
+            montant_tva=invoice.montant_tva,
+            timbre_price=invoice.timbre_price,
+            final_price=invoice.final_price,
+            final_price_in_words=invoice.final_price_in_words,
+        )
+        for invoice in invoices
+    ]
+
+    # Use jsonable_encoder to serialize Pydantic models
+    return JSONResponse(content=jsonable_encoder(invoice_responses))
