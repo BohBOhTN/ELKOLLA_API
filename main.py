@@ -4,6 +4,7 @@ from models import Invoice, Item
 from database import SessionLocal, init_db
 from pydantic import BaseModel
 from utils import number_to_words, generate_invoice_number  # Import the helper function
+from datetime import datetime
 
 app = FastAPI()
 
@@ -41,6 +42,9 @@ def get_db():
 
 @app.post("/create_invoice", response_model=InvoiceResponse)
 def create_invoice(invoice_request: InvoiceRequest, db: Session = Depends(get_db)):
+    # Convert invoice_date from string to datetime.date
+    invoice_date_obj = datetime.strptime(invoice_request.invoice_date, "%d/%m/%Y").date()
+
     # 1. Calculate Subtotal HT
     subtotal_ht = sum(item.unit_price * item.quantity for item in invoice_request.items)
 
@@ -64,7 +68,7 @@ def create_invoice(invoice_request: InvoiceRequest, db: Session = Depends(get_db
         client_name=invoice_request.client_name,
         vat_number=invoice_request.vat_number,
         address=invoice_request.address,
-        invoice_date=invoice_request.invoice_date,
+        invoice_date=invoice_date_obj,  # Use the converted date object here
         invoice_number=invoice_number,
         subtotal_ht=subtotal_ht,
         montant_tva=montant_tva,
