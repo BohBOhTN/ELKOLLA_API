@@ -2,6 +2,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func  # Import func for SQL functions
 from models import Invoice  # Import your Invoice model here
+from num2words import num2words  # Library for converting numbers to words
 
 def generate_invoice_number(invoice_date: str, db: Session) -> str:
     # Convert the provided invoice_date to datetime.date
@@ -33,8 +34,9 @@ def generate_invoice_number(invoice_date: str, db: Session) -> str:
     month_year = f"{str(month).zfill(2)}{str(year)[-2:]}"  # MMYY
     return f"{month_year}_{str(new_number).zfill(3)}"
 
-# Placeholder function for converting numbers to words
 def number_to_words(number: float) -> str:
-    # Simple placeholder for converting number to words (you can use a library for more complex conversion)
-    units = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"]
-    return f"{units[int(number)]} Dinars" if number < 11 else f"{number} Dinars"
+    """
+    Convert a number to its French word representation, appending "Dinars."
+    """
+    words = num2words(number, lang="fr")  # Convert the number to French words
+    return f"{words.capitalize()} dinars"
