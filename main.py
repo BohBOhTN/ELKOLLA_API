@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends
+from fastapi.encoders import jsonable_encoder  # Fix: Add this line
 from sqlalchemy.orm import Session
 from models import Invoice, Item
 from database import SessionLocal, init_db
@@ -8,6 +9,7 @@ from datetime import datetime
 from typing import List, Optional
 from fastapi.responses import JSONResponse
 from sqlalchemy.sql import func  # Import func for SQL functions
+
 
 app = FastAPI()
 
@@ -106,7 +108,6 @@ def create_invoice(invoice_request: InvoiceRequest, db: Session = Depends(get_db
         final_price=final_price,
         final_price_in_words=final_price_in_words
     )
-from fastapi.encoders import jsonable_encoder
 
 @app.get("/invoices", response_model=List[InvoiceResponse])
 def get_invoices(
@@ -147,3 +148,41 @@ def get_invoices(
 
     # Use jsonable_encoder to serialize Pydantic models
     return JSONResponse(content=jsonable_encoder(invoice_responses))
+
+@app.delete("/delete_invoice")
+def delete_invoice(
+    invoice_id: Optional[int] = None, 
+    invoice_number: Optional[str] = None, 
+    db: Session = Depends(get_db)
+):
+    """
+    Delete an invoice by ID or invoice number.
+    - invoice_id: int -> Delete based on invoice ID.
+    - invoice_number: str -> Delete based on invoice number.
+    """
+    if not invoice_id and not invoice_number:
+        raise HTTPException(status_code=400, detail="You must provide either invoice_id or invoice_number.")
+    
+    # Find the invoice
+    invoice_query = db.query(Invoice)
+    
+    if invoice_id:
+        invoice_query = invoice_query.filter(Invoice.invoice_id == invoice_id)
+    elif invoice_number:
+        invoice_query = invoice_query.filter(Invoice.invoice_number == invoice_number)
+    
+    invoice = invoice_query.first()
+    
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found.")
+    
+    # Delete associated items first
+    db.query(Item).filter(Item.invoice_id == invoice.invoice_id).delete()
+
+    # Delete the invoice
+    db.delete(invoice)
+    db.commit()
+    
+    return {"message": f"Invoice with ID {invoice_id} or number {invoice_number} has been deleted successfully."}
+
+
