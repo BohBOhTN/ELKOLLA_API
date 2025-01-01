@@ -1,7 +1,7 @@
 # ELKOLLA API
 
 ## Project Overview
-The ELKOLLA API is a FastAPI-based web service designed for managing invoices, including their creation, retrieval, and deletion. It uses SQLAlchemy for ORM-based database management and integrates utility functions for invoice number generation and converting numeric amounts to words in Arabic. The project provides endpoints to generate invoices, list them based on various filters, and delete them when necessary.
+The ELKOLLA API is a FastAPI-based web service designed for managing invoices, including their creation, retrieval, and deletion. It uses SQLAlchemy for ORM-based database management and integrates utility functions for invoice number generation and converting numeric amounts to words in French. The project provides endpoints to generate invoices, list them based on various filters, and delete them when necessary.
 
 ## Features
 
@@ -9,14 +9,14 @@ The ELKOLLA API is a FastAPI-based web service designed for managing invoices, i
 - **Invoice Retrieval**: Fetches invoices filtered by year, month, and day.
 - **Invoice Deletion**: Deletes invoices by either invoice ID or invoice number, along with their associated items.
 - **Dynamic Invoice Number Generation**: Invoice numbers are automatically generated in the format `MMYY_XXX` based on the current month and year.
-- **Amount Conversion**: Converts the final price of invoices into words using OpenAI's GPT model, specifically for Arabic numbers.
+- **Amount Conversion**: Converts the final price of invoices into words using OpenAI's GPT model, specifically for French numbers.
 - **Database Support**: Uses SQLAlchemy ORM for storing invoices and associated items in a SQLite database.
 
 ## Technology Stack
 - **FastAPI**: Framework for building the API endpoints.
 - **SQLAlchemy**: ORM for database interaction.
 - **SQLite**: Database used for storage.
-- **OpenAI GPT-3**: Used for converting numeric amounts into Arabic words.
+- **OpenAI GPT-3**: Used for converting numeric amounts into French words.
 - **Pydantic**: For data validation and serialization.
 
 ## API Endpoints
@@ -48,8 +48,8 @@ The ELKOLLA API is a FastAPI-based web service designed for managing invoices, i
     ]
   }
 
-Response:
-json
+- **Response**:
+```json
 
 {
   "invoice_number": "1234_001",
@@ -59,7 +59,8 @@ json
   "final_price": 59.85,
   "final_price_in_words": "Fifty-nine dinars and eighty-five millimes"
 }
-2. Get Invoices
+
+Get Invoices
 Endpoint: /invoices
 Method: GET
 Description: Retrieves invoices, filtered by year, month, or day.
