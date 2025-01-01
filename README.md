@@ -11,14 +11,15 @@ The ELKOLLA API is a FastAPI-based web service designed for managing invoices, i
 - **Invoice Deletion**: Deletes invoices by either invoice ID or invoice number, along with their associated items.
 - **Dynamic Invoice Number Generation**: Invoice numbers are automatically generated in the format `MMYY_XXX` based on the current month and year.
 - **Amount Conversion**: Converts the final price of invoices into words using OpenAI's GPT model, specifically for French numbers.
-- **Database Support**: Uses SQLAlchemy ORM for storing invoices and associated items in a SQLite database.
+- **Database Support**: Uses SQLAlchemy ORM for storing invoices and associated items in a PostgreSQL database hosted on AWS RDS.
 
 ## Technology Stack
 - **FastAPI**: Framework for building the API endpoints.
 - **SQLAlchemy**: ORM for database interaction.
-- **SQLite**: Database used for storage.
+- **PostgreSQL on AWS RDS**: Database used for storage.
 - **OpenAI GPT-3**: Used for converting numeric amounts into French words.
 - **Pydantic**: For data validation and serialization.
+- **JavaScript / Flatpickr**: For front-end validation, including calendar-based date input and user-friendly item management.
 
 ## API Endpoints
 
