@@ -6,9 +6,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Initialize Flatpickr for the date input
     flatpickr(dateInput, {
-        dateFormat: "d/m/Y", // DD/MM/YYYY format
-        locale: "fr", // French localization
-        allowInput: true, // Allow manual input
+        dateFormat: "d/m/Y",
+        locale: "fr",
+        allowInput: true,
     });
 
     // Add a new item row to the table
@@ -23,12 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
     }
 
-    // Validate date format
-    function validateDate(date) {
-        const regex = /^\d{2}\/\d{2}\/\d{4}$/;
-        return regex.test(date);
-    }
-
     // Validate all item rows
     function validateItems() {
         const rows = Array.from(itemsTable.querySelectorAll("tr"));
@@ -38,12 +32,24 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         for (const row of rows) {
-            const reference = row.querySelector("[name='reference']").value.trim();
-            const designation = row.querySelector("[name='designation']").value.trim();
-            const quantity = row.querySelector("[name='quantity']").value.trim();
-            const unitPrice = row.querySelector("[name='unitPrice']").value.trim();
+            const referenceInput = row.querySelector("input[name='reference']");
+            const designationInput = row.querySelector("input[name='designation']");
+            const quantityInput = row.querySelector("input[name='quantity']");
+            const unitPriceInput = row.querySelector("input[name='unitPrice']");
 
-            if (!reference || !designation || !quantity || !unitPrice) {
+            console.log("Row validation:", {
+                reference: referenceInput?.value.trim(),
+                designation: designationInput?.value.trim(),
+                quantity: quantityInput?.value.trim(),
+                unitPrice: unitPriceInput?.value.trim(),
+            });
+
+            if (
+                !referenceInput || !referenceInput.value.trim() ||
+                !designationInput || !designationInput.value.trim() ||
+                !quantityInput || isNaN(parseFloat(quantityInput.value.trim())) || parseFloat(quantityInput.value.trim()) <= 0 ||
+                !unitPriceInput || isNaN(parseFloat(unitPriceInput.value.trim())) || parseFloat(unitPriceInput.value.trim()) <= 0
+            ) {
                 alert("All fields in the item rows must be filled.");
                 return false;
             }
@@ -53,18 +59,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Add event listener for adding items
-    addItemButton.addEventListener("click", () => {
-        addItem();
-    });
+    addItemButton.addEventListener("click", () => addItem());
 
     // Event delegation for table actions
     itemsTable.addEventListener("click", (e) => {
-        // Remove row functionality
         if (e.target.classList.contains("remove-btn")) {
             e.target.closest("tr").remove();
         }
     });
-
     // Validate unit price input
     itemsTable.addEventListener("input", (e) => {
         if (e.target.name === "unitPrice") {
@@ -79,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Handle form submission
-    invoiceForm.addEventListener("submit", async function (event) {
+    invoiceForm.addEventListener("submit", (event) => {
         event.preventDefault();
 
         const clientName = document.getElementById("client_name").value.trim();
@@ -87,26 +89,18 @@ document.addEventListener("DOMContentLoaded", () => {
         const address = document.getElementById("address").value.trim();
         const invoiceDate = document.getElementById("invoice_date").value.trim();
 
-        // Validate required fields
         if (!clientName || !vatNumber || !invoiceDate) {
             alert("Please fill in all required fields.");
             return;
         }
 
-        if (!validateDate(invoiceDate)) {
-            alert("Invalid date format. Please use DD/MM/YYYY.");
-            return;
-        }
-
-        if (!validateItems()) {
-            return; // Validation for items failed
-        }
+        if (!validateItems()) return;
 
         const items = Array.from(itemsTable.querySelectorAll("tr")).map((row) => ({
-            reference: row.querySelector("[name='reference']").value.trim(),
-            designation: row.querySelector("[name='designation']").value.trim(),
-            quantity: parseInt(row.querySelector("[name='quantity']").value.trim(), 10),
-            unit_price: parseFloat(row.querySelector("[name='unitPrice']").value.trim()),
+            reference: row.querySelector("input[name='reference']").value.trim(),
+            designation: row.querySelector("input[name='designation']").value.trim(),
+            quantity: parseInt(row.querySelector("input[name='quantity']").value.trim(), 10),
+            unit_price: parseFloat(row.querySelector("input[name='unitPrice']").value.trim()),
         }));
 
         const invoiceData = {
@@ -117,27 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
             items: items,
         };
 
-        try {
-            const response = await fetch("/create_invoice", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(invoiceData),
-            });
-
-            if (response.ok) {
-                const responseData = await response.json();
-                alert("Invoice created successfully! Invoice Number: " + responseData.invoice_number);
-                invoiceForm.reset();
-                itemsTable.innerHTML = ""; // Clear the items table
-            } else {
-                const errorData = await response.json();
-                alert("Error: " + errorData.detail);
-            }
-        } catch (error) {
-            console.error("Error:", error);
-            alert("An unexpected error occurred.");
-        }
+        localStorage.setItem("invoiceData", JSON.stringify(invoiceData));
+        window.location.href = "review_invoice.html";
     });
 });

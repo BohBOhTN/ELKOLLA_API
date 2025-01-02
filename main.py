@@ -1,4 +1,3 @@
-from fastapi import FastAPI, Depends
 from fastapi.encoders import jsonable_encoder  # Fix: Add this line
 from sqlalchemy.orm import Session
 from models import Invoice, Item
@@ -10,12 +9,22 @@ from typing import List, Optional
 from fastapi.responses import JSONResponse
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.sql import func  # Import func for SQL functions
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI()
 
 # Initialize the database
 init_db()
+
+# Allow all origins for testing
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:8123"],  # You can restrict this to specific domains in production
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all HTTP methods, including OPTIONS
+    allow_headers=["*"],  # Allows all headers
+)
 
 class ItemRequest(BaseModel):
     reference: str
