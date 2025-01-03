@@ -157,6 +157,20 @@
             cursor: pointer;
         }
 
+        #print-iframe {
+            position: absolute;
+            top: 10px;
+            right: 120px; /* Adjust to position next to the close button */
+            background: #28a745; /* Green color */
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        
+
         button {
             margin: 0 5px;
             padding: 5px 10px;
@@ -171,10 +185,6 @@
             color: white;
         }
 
-        .download-btn {
-            background-color: #28a745;
-            color: white;
-        }
 
         .delete-btn {
             background-color: #dc3545;
@@ -205,7 +215,6 @@
             <thead>
                 <tr>
                     <th>Invoice Number</th>
-                    <th>Client Name</th>
                     <th>Subtotal</th>
                     <th>VAT</th>
                     <th>Stamp Price</th>
@@ -226,6 +235,7 @@
 
     <div id="iframe-container">
         <button id="close-iframe">Close</button>
+        <button id="print-iframe">Print Invoice</button>
         <iframe id="invoice-iframe"></iframe>
     </div>
 
@@ -237,6 +247,14 @@
             const iframeContainer = document.getElementById("iframe-container");
             const iframe = document.getElementById("invoice-iframe");
             const closeIframeBtn = document.getElementById("close-iframe");
+            const printIframeBtn = document.getElementById("print-iframe");
+
+            // Function to print the iframe content
+            printIframeBtn.addEventListener("click", () => {
+                const iframeWindow = iframe.contentWindow || iframe.contentDocument;
+                iframeWindow.focus();
+                iframeWindow.print();
+            });
 
             // Show loading indicator
             function showLoading() {
@@ -292,14 +310,12 @@
                     const row = invoiceList.insertRow();
                     row.innerHTML = `
                         <td>${invoice.invoice_number}</td>
-                        <td>${invoice.client_name}</td>
                         <td>${invoice.subtotal_ht} TND</td>
                         <td>${invoice.montant_tva} TND</td>
                         <td>${invoice.timbre_price} TND</td>
                         <td>${invoice.final_price} TND</td>
                         <td>
                             <button class="view-btn" data-invoice-number="${invoice.invoice_number}">View</button>
-                            <button class="download-btn" data-invoice-number="${invoice.invoice_number}">Download</button>
                             <button class="delete-btn" data-invoice-number="${invoice.invoice_number}">Delete</button>
                         </td>
                     `;
