@@ -1,10 +1,191 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoices</title>
+    <title>Invoice Viewer</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Helvetica;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+
+        .invoice-full {
+            width: 95%;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+        }
+
+        .company-adress {
+            text-align: left;
+            font-weight: bold;
+        }
+        .logo {
+            max-width: 150px;
+        }
+
+        .footer {
+            text-align: left;
+            margin-top: 10px;
+        }
+
+        .stamp {
+            max-width: 150px;
+        }
+
+        .total-left-head {
+            font-weight: bold;
+        }
+
+        .invoice {
+            margin: auto;
+            border: 1px solid #ddd;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .invoice-header {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .invoice-date {
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .invoice-number {
+            text-align: center;
+            font-size: 2.2em;
+            font-weight: bold;
+        }
+
+        .client-info {
+            text-align: center;
+            font-weight: normal;
+            line-height: 1.5;
+        }
+
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .invoice-table th,
+        .invoice-table td {
+            border: 1px solid #ddd;
+            text-align: center;
+            padding: 8px;
+        }
+
+        .invoice-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .totals {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .totals .left,
+        .totals .right {
+            width: 48%;
+        }
+
+        .totals table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .totals td {
+            padding: 5px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .totals .total {
+            font-weight: bold;
+            background-color: #f5f5f5;
+        }
+
+        .totals-header {
+            font-weight: bold;
+            background-color: #f5f5f5;
+        }
+
+        #iframe-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #iframe-container iframe {
+            width: 80%;
+            height: 80%;
+            border: none;
+            background: #fff;
+        }
+
+        #close-iframe {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #f00;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .view-btn {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .download-btn {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+    </style>
 </head>
 <body>
     <div class="container">
@@ -43,11 +224,19 @@
         </div>
     </div>
 
+    <div id="iframe-container">
+        <button id="close-iframe">Close</button>
+        <iframe id="invoice-iframe"></iframe>
+    </div>
+
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const invoiceList = document.getElementById("invoice-list").getElementsByTagName("tbody")[0];
             const filterBtn = document.getElementById("filter-btn");
             const loadingIndicator = document.getElementById("loading");
+            const iframeContainer = document.getElementById("iframe-container");
+            const iframe = document.getElementById("invoice-iframe");
+            const closeIframeBtn = document.getElementById("close-iframe");
 
             // Show loading indicator
             function showLoading() {
@@ -109,48 +298,148 @@
                         <td>${invoice.timbre_price} TND</td>
                         <td>${invoice.final_price} TND</td>
                         <td>
-                            <a href="/view_invoice/${invoice.invoice_number}">
-                                <img src="view-icon.svg" alt="View" class="action-icon">
-                            </a>
-                            <a href="/download_invoice/${invoice.invoice_number}">
-                                <img src="download-icon.svg" alt="Download" class="action-icon">
-                            </a>
-                            <button class="delete-btn" data-invoice-number="${invoice.invoice_number}">
-                                <img src="delete-icon.svg" alt="Delete" class="action-icon">
-                            </button>
+                            <button class="view-btn" data-invoice-number="${invoice.invoice_number}">View</button>
+                            <button class="download-btn" data-invoice-number="${invoice.invoice_number}">Download</button>
+                            <button class="delete-btn" data-invoice-number="${invoice.invoice_number}">Delete</button>
                         </td>
                     `;
                 });
 
-                // Add event listener for delete buttons
-                document.querySelectorAll('.delete-btn').forEach(button => {
-                    button.addEventListener('click', (event) => {
+                // Add event listener for view buttons
+                document.querySelectorAll('.view-btn').forEach(button => {
+                    button.addEventListener('click', async (event) => {
                         const invoiceNumber = event.target.dataset.invoiceNumber;
-                        deleteInvoice(invoiceNumber);
+                        showInvoice(invoiceNumber);
                     });
                 });
             }
 
-            // Delete an invoice by invoice number
-            async function deleteInvoice(invoiceNumber) {
-                showLoading();
+            // Show invoice in iframe
+            async function showInvoice(invoiceNumber) {
                 try {
-                    const response = await fetch(`http://127.0.0.1:8123/delete_invoice?invoice_number=${invoiceNumber}`, {
-                        method: "DELETE",
-                    });
+                    const response = await fetch(`http://127.0.0.1:8123/invoice_details?invoice_number=${invoiceNumber}`);
                     if (!response.ok) {
-                        throw new Error("Failed to delete invoice");
+                        throw new Error("Failed to fetch invoice details");
                     }
-                    const result = await response.json();
-                    alert(result.message);
-                    fetchInvoices(); // Refresh the list of invoices
+                    const invoiceDetails = await response.json();
+                    iframe.srcdoc = generateInvoiceHTML(invoiceDetails);
+                    iframeContainer.style.display = "flex";
                 } catch (error) {
                     console.error(error);
-                    alert("Error deleting invoice.");
-                } finally {
-                    hideLoading();
+                    alert("Error fetching invoice details.");
                 }
             }
+
+            
+
+           // Generate HTML for the invoice iframe
+            function generateInvoiceHTML(details) {
+                return `
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Invoice</title>
+                        <style>${document.querySelector("style").innerHTML}</style>
+                    </head>
+                    <body>
+                        <div class="invoice-full">
+                            <header class="header">
+                                <div class="company-info">
+                                    <div class="company-adress">
+                                        <p>ROUTE DE SOUKRA KM 3,5 SFAX</p>
+                                        <p>MF : 1749683EAE901</p>
+                                        <p>Tél : 55 185 581 / 52 438 018</p>
+                                    </div>
+                                    <img src="./images/logo.png" alt="Company Logo" class="logo">
+                                </div>
+                                <div class="invoice-header">
+                                    <div class="invoice-date">
+                                        <p>Date: ${details.invoice_date}</p>
+                                    </div>
+                                    <div class="invoice-number">
+                                        <p><strong>Facture N° ${details.invoice_number}</strong></p>
+                                    </div>
+                                    <div class="client-info">
+                                        <p><strong>Client:</strong> ${details.client_name}</p>
+                                        <p><strong>MF:</strong> ${details.vat_number}</p>
+                                        <p><strong>Address:</strong> ${details.address}</p>
+                                    </div>
+                                </div>
+                            </header>
+                            <div class="invoice">
+                                <table class="invoice-table">
+                                    <thead>
+                                        <tr>
+                                            <th>REF</th>
+                                            <th>DESIGNATION</th>
+                                            <th>QTE</th>
+                                            <th>PU HT</th>
+                                            <th>TOTAL HT</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${details.items.map(item => `
+                                            <tr>
+                                                <td>${item.reference}</td>
+                                                <td>${item.designation}</td>
+                                                <td>${item.quantity}</td>
+                                                <td>${item.unit_price} TND</td>
+                                                <td>${item.total_price} TND</td>
+                                            </tr>
+                                        `).join("")}
+                                    </tbody>
+                                </table>
+                                <div class="totals">
+                                    <div class="left">
+                                        <table>
+                                            <tr>
+                                                <td class="totals-header">Base TVA</td>
+                                                <td>${details.subtotal_ht} TND</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="totals-header">Montant TVA</td>
+                                                <td>${details.montant_tva} TND</td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="2">${details.final_price_in_words}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="right">
+                                        <table>
+                                            <tr>
+                                                <td class="totals-header">Montant HT</td>
+                                                <td>${details.subtotal_ht} TND</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="totals-header">Montant TVA</td>
+                                                <td>${details.montant_tva} TND</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="totals-header">Timbre</td>
+                                                <td>${details.timbre_price} TND</td>
+                                            </tr>
+                                            <tr class="total">
+                                                <td>Total Net à payer TTC</td>
+                                                <td>${details.final_price} TND</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `;
+            }
+
+
+            // Close iframe
+            closeIframeBtn.addEventListener("click", () => {
+                iframeContainer.style.display = "none";
+            });
 
             // Initial fetch of invoices for the current month and year
             fetchInvoices(currentYear, currentMonth);
