@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Invoice</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>   
+    <div class="container">
+        <h1>Review Invoice</h1>
+        <div id="invoice-review">
+            <h2>Client Information</h2>
+            <p><strong>Name:</strong> <span id="review-client-name"></span></p>
+            <p><strong>VAT Number:</strong> <span id="review-vat-number"></span></p>
+            <p><strong>Address:</strong> <span id="review-address"></span></p>
+            <p><strong>Invoice Date:</strong> <span id="review-invoice-date"></span></p>
+
+            <h2>Invoice Items</h2>
+            <table id="review-items-table">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Designation</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Rows will be dynamically added here -->
+                </tbody>
+            </table>
+        </div>
+        <div class="actions">
+            <button id="edit-invoice" class="add-btn">Edit</button>
+            <button id="confirm-invoice" class="submit-btn">Confirm</button>
+        </div>
+    </div>
+
+    <script src="review_invoice.js"></script>
+</body>
+</html>
