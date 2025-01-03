@@ -9,6 +9,7 @@ The ELKOLLA API is a FastAPI-based web service designed for managing invoices, i
 - **Invoice Creation**: Allows users to create invoices by providing client details, invoice date, and items with quantity and unit price.
 - **Invoice Retrieval**: Fetches invoices filtered by year, month, and day.
 - **Invoice Deletion**: Deletes invoices by either invoice ID or invoice number, along with their associated items.
+- **Invoice Details**: Retrieves detailed information about a specific invoice, including items, prices, and more.
 - **Dynamic Invoice Number Generation**: Invoice numbers are automatically generated in the format `MMYY_XXX` based on the current month and year.
 - **Amount Conversion**: Converts the final price of invoices into words using OpenAI's GPT model, specifically for French numbers.
 - **Database Support**: Uses SQLAlchemy ORM for storing invoices and associated items in a PostgreSQL database hosted on AWS RDS.
@@ -96,6 +97,45 @@ The ELKOLLA API is a FastAPI-based web service designed for managing invoices, i
   ```json
   {
     "message": "Invoice has been deleted successfully."
+  }
+  ```
+
+### 4. **Invoice Details**
+- **Endpoint**: `/invoice_details`
+- **Method**: GET
+- **Description**: Retrieves detailed information about a specific invoice, including client name, VAT number, address, invoice date, subtotal, VAT amount, timbre price, final price, and items.
+- **Query Parameters**:
+  - `invoice_number`: Optional filter by invoice number.
+  - `invoice_id`: Optional filter by invoice ID.
+- **Response**:
+  ```json
+  {
+    "invoice_number": "1234_001",
+    "client_name": "John Doe",
+    "vat_number": "123456789",
+    "address": "123 Main St, City, Country",
+    "invoice_date": "31/12/2024",
+    "subtotal_ht": 55.0,
+    "montant_tva": 3.85,
+    "timbre_price": 1.0,
+    "final_price": 59.85,
+    "final_price_in_words": "Fifty-nine dinars and eighty-five millimes",
+    "items": [
+      {
+        "reference": "item001",
+        "quantity": 2,
+        "designation": "Product A",
+        "unit_price": 15.0,
+        "total_price": 30.0
+      },
+      {
+        "reference": "item002",
+        "quantity": 1,
+        "designation": "Product B",
+        "unit_price": 25.0,
+        "total_price": 25.0
+      }
+    ]
   }
   ```
 
