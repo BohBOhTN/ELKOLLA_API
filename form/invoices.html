@@ -318,7 +318,7 @@
                             <button class="view-btn" data-invoice-number="${invoice.invoice_number}">View</button>
                             <button class="delete-btn" data-invoice-number="${invoice.invoice_number}">Delete</button>
                         </td>
-                    `;
+                    `
                 });
 
                 // Add event listener for view buttons
@@ -326,6 +326,14 @@
                     button.addEventListener('click', async (event) => {
                         const invoiceNumber = event.target.dataset.invoiceNumber;
                         showInvoice(invoiceNumber);
+                    });
+                });
+
+                // Add event listener for delete buttons
+                document.querySelectorAll('.delete-btn').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const invoiceNumber = event.target.dataset.invoiceNumber;
+                        handleDelete(invoiceNumber);
                     });
                 });
             }
@@ -343,6 +351,27 @@
                 } catch (error) {
                     console.error(error);
                     alert("Error fetching invoice details.");
+                }
+            }
+
+            // Handle delete action
+            async function handleDelete(invoiceNumber) {
+                const confirmDelete = confirm(`Are you sure you want to delete invoice ${invoiceNumber}?`);
+                if (confirmDelete) {
+                    try {
+                        const response = await fetch(`http://127.0.0.1:8123/delete_invoice?invoice_number=${invoiceNumber}`, {
+                            method: 'DELETE'
+                        });
+                        if (!response.ok) {
+                            throw new Error("Failed to delete invoice");
+                        }
+                        alert(`Invoice ${invoiceNumber} deleted successfully.`);
+                        // Reload invoices after deletion
+                        fetchInvoices();
+                    } catch (error) {
+                        console.error(error);
+                        alert("Error deleting the invoice.");
+                    }
                 }
             }
 
